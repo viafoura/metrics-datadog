@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
@@ -30,12 +31,17 @@ public class HttpTransport implements Transport {
   private final int connectTimeout;     // in milliseconds
   private final int socketTimeout;      // in milliseconds
   private final HttpHost proxy;
+  private final Executor executor;
 
-  private HttpTransport(String apiKey, int connectTimeout, int socketTimeout, HttpHost proxy) {
+  private HttpTransport(String apiKey, int connectTimeout, int socketTimeout, HttpHost proxy, Executor executor) {
     this.seriesUrl = String.format("%s/series?api_key=%s", BASE_URL, apiKey);
     this.connectTimeout = connectTimeout;
     this.socketTimeout = socketTimeout;
     this.proxy = proxy;
+    if (executor != null)
+      this.executor = executor;
+    else
+      this.executor = Executor.newInstance();
   }
 
   public static class Builder {
@@ -43,6 +49,7 @@ public class HttpTransport implements Transport {
     int connectTimeout = 5000;
     int socketTimeout = 5000;
     HttpHost proxy;
+    Executor executor;
 
     public Builder withApiKey(String key) {
       this.apiKey = key;
@@ -64,8 +71,13 @@ public class HttpTransport implements Transport {
       return this;
     }
 
+    public Builder withExecutor(Executor executor) {
+      this.executor = executor;
+      return this;
+    }
+
     public HttpTransport build() {
-      return new HttpTransport(apiKey, connectTimeout, socketTimeout, proxy);
+      return new HttpTransport(apiKey, connectTimeout, socketTimeout, proxy, executor);
     }
   }
 
@@ -117,7 +129,7 @@ public class HttpTransport implements Transport {
         request.viaProxy(this.transport.proxy);
       }
 
-      Response response = request.execute();
+      Response response = this.transport.executor.execute(request);
 
       long elapsed = System.currentTimeMillis() - start;
 
