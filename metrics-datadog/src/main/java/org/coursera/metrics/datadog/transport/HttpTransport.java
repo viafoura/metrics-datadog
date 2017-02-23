@@ -38,10 +38,11 @@ public class HttpTransport implements Transport {
     this.connectTimeout = connectTimeout;
     this.socketTimeout = socketTimeout;
     this.proxy = proxy;
-    if (executor != null)
+    if (executor != null) {
       this.executor = executor;
-    else
+    } else {
       this.executor = Executor.newInstance();
+    }
   }
 
   public static class Builder {
