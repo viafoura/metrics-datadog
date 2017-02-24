@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.coursera</groupId>
     <artifactId>metrics-datadog-parent</artifactId>
-    <version>1.1.9</version>
+    <version>1.1.10-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Datadog Metrics Parent</name>
     <url>https://github.com/coursera/metrics-datadog</url>
