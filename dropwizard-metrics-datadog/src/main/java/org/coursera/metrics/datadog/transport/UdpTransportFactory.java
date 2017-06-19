@@ -16,6 +16,9 @@ public class UdpTransportFactory implements AbstractTransportFactory {
   private int port = 8125;
 
   @JsonProperty
+  private boolean retryingLookup = false;
+
+  @JsonProperty
   private String prefix = null;
 
   public UdpTransport build() {
@@ -23,6 +26,7 @@ public class UdpTransportFactory implements AbstractTransportFactory {
         .withPrefix(prefix)
         .withStatsdHost(statsdHost)
         .withPort(port)
+        .withRetryingLookup(retryingLookup)
         .build();
     }
 }

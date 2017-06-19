@@ -9,8 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Uses dogstatsd UDP protocol to push metrics to datadog. Note that datadog doesn't support
@@ -27,17 +29,25 @@ public class UdpTransport implements Transport {
   private final StatsDClient statsd;
   private final Map lastSeenCounters = new HashMap<String, Long>();
 
-  private UdpTransport(String prefix, String statsdHost, int port, String[] globalTags) {
+  private UdpTransport(String prefix, String statsdHost, int port, boolean isRetryingLookup, String[] globalTags) {
+    final Callable<InetSocketAddress> socketAddressCallable;
+
+    if(isRetryingLookup) {
+      socketAddressCallable = volatileAddressResolver(statsdHost, port);
+    } else {
+      socketAddressCallable = staticAddressResolver(statsdHost, port);
+    }
+
     statsd = new NonBlockingStatsDClient(
             prefix,
-            statsdHost,
-            port,
+            Integer.MAX_VALUE,
             globalTags,
             new StatsDClientErrorHandler() {
               public void handle(Exception e) {
                 LOG.error(e.getMessage(), e);
               }
-            }
+            },
+            socketAddressCallable
     );
   }
 
@@ -49,6 +59,7 @@ public class UdpTransport implements Transport {
     String prefix = null;
     String statsdHost = "localhost";
     int port = 8125;
+    boolean isLookupRetrying = false;
 
     public Builder withPrefix(String prefix) {
       this.prefix = prefix;
@@ -65,8 +76,13 @@ public class UdpTransport implements Transport {
       return this;
     }
 
+    public Builder withRetryingLookup(boolean isRetrying) {
+      this.isLookupRetrying = isRetrying;
+      return this;
+    }
+
     public UdpTransport build() {
-      return new UdpTransport(prefix, statsdHost, port, new String[0]);
+      return new UdpTransport(prefix, statsdHost, port, isLookupRetrying, new String[0]);
     }
   }
 
@@ -135,5 +151,20 @@ public class UdpTransport implements Transport {
      */
     public void send() {
     }
+  }
+
+  // Visible for testing.
+  static Callable<InetSocketAddress> staticAddressResolver(final String host, final int port) {
+    try {
+      return NonBlockingStatsDClient.staticAddressResolution(host, port);
+    } catch(final Exception e) {
+      LOG.error("Error during constructing statsd address resolver.", e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  // Visible for testing.
+  static Callable<InetSocketAddress> volatileAddressResolver(final String host, final int port) {
+    return NonBlockingStatsDClient.volatileAddressResolution(host, port);
   }
 }
