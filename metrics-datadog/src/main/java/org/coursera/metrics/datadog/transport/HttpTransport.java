@@ -116,9 +116,13 @@ public class HttpTransport implements Transport {
         StringBuilder sb = new StringBuilder();
         sb.append("Sending HTTP POST request to ");
         sb.append(this.transport.seriesUrl);
-        sb.append(", POST body is: \n");
-        sb.append(postBody);
+        sb.append(", POST body length is: ");
+        sb.append(postBody.length());
         LOG.debug(sb.toString());
+
+        StringBuilder bodyMsgBuilder = new StringBuilder();
+        bodyMsgBuilder.append("POST body is: \n").append(postBody);
+        LOG.debug(bodyMsgBuilder.toString());
       }
       long start = System.currentTimeMillis();
       org.apache.http.client.fluent.Request request = Post(this.transport.seriesUrl)
