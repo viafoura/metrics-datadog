@@ -1,7 +1,11 @@
 package org.coursera.metrics.datadog.transport;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.zip.DeflaterInputStream;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
@@ -116,12 +120,12 @@ public class HttpTransport implements Transport {
         StringBuilder sb = new StringBuilder();
         sb.append("Sending HTTP POST request to ");
         sb.append(this.transport.seriesUrl);
-        sb.append(", POST body length is: ");
+        sb.append(", uncompressed POST body length is: ");
         sb.append(postBody.length());
         LOG.debug(sb.toString());
 
         StringBuilder bodyMsgBuilder = new StringBuilder();
-        bodyMsgBuilder.append("POST body is: \n").append(postBody);
+        bodyMsgBuilder.append("Uncompressed POST body is: \n").append(postBody);
         LOG.debug(bodyMsgBuilder.toString());
       }
       long start = System.currentTimeMillis();
@@ -129,7 +133,9 @@ public class HttpTransport implements Transport {
         .useExpectContinue()
         .connectTimeout(this.transport.connectTimeout)
         .socketTimeout(this.transport.socketTimeout)
-        .bodyString(postBody, ContentType.APPLICATION_JSON);
+        .addHeader("Content-Encoding", "deflate")
+        .addHeader("Content-MD5", DigestUtils.md5Hex(postBody))
+        .bodyStream(deflated(postBody), ContentType.APPLICATION_JSON);
 
       if (this.transport.proxy != null) {
         request.viaProxy(this.transport.proxy);
@@ -169,6 +175,14 @@ public class HttpTransport implements Transport {
       } else {
         response.discardContent();
       }
+    }
+
+    private static InputStream deflated(String str) throws IOException {
+      if (str == null || str.length() == 0) {
+        return new ByteArrayInputStream(new byte[0]);
+      }
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(str.getBytes("UTF-8"));
+      return new DeflaterInputStream(inputStream);
     }
   }
 }
