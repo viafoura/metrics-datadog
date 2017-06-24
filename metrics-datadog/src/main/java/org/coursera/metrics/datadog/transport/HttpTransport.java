@@ -175,6 +175,7 @@ public class HttpTransport implements Transport {
             StringBuilder sb = new StringBuilder();
 
             sb.append(headline);
+            sb.append("\n");
             sb.append("  Timing: ").append(elapsed).append(" ms\n");
             sb.append("  Status: ").append(response.getStatusLine().getStatusCode()).append("\n");
 
