@@ -39,7 +39,12 @@ public class HttpTransport implements Transport {
   private final Executor executor;
   private final boolean useCompression;
 
-  private HttpTransport(String apiKey, int connectTimeout, int socketTimeout, HttpHost proxy, Executor executor, boolean useCompression) {
+  private HttpTransport(String apiKey,
+                        int connectTimeout,
+                        int socketTimeout,
+                        HttpHost proxy,
+                        Executor executor,
+                        boolean useCompression) {
     this.seriesUrl = String.format("%s/series?api_key=%s", BASE_URL, apiKey);
     this.connectTimeout = connectTimeout;
     this.socketTimeout = socketTimeout;
@@ -141,13 +146,15 @@ public class HttpTransport implements Transport {
         .useExpectContinue()
         .connectTimeout(this.transport.connectTimeout)
         .socketTimeout(this.transport.socketTimeout);
-        if (this.transport.useCompression) {
-          request.addHeader("Content-Encoding", "deflate")
-            .addHeader("Content-MD5", DigestUtils.md5Hex(postBody))
-            .bodyStream(deflated(postBody), ContentType.APPLICATION_JSON);
-        } else {
-          request.bodyString(postBody, ContentType.APPLICATION_JSON);
-        }
+
+      if (this.transport.useCompression) {
+        request
+          .addHeader("Content-Encoding", "deflate")
+          .addHeader("Content-MD5", DigestUtils.md5Hex(postBody))
+          .bodyStream(deflated(postBody), ContentType.APPLICATION_JSON);
+      } else {
+        request.bodyString(postBody, ContentType.APPLICATION_JSON);
+      }
 
       if (this.transport.proxy != null) {
         request.viaProxy(this.transport.proxy);
