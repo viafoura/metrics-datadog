@@ -1,7 +1,11 @@
 package org.coursera.metrics.datadog.transport;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.zip.DeflaterInputStream;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
@@ -33,12 +37,19 @@ public class HttpTransport implements Transport {
   private final int socketTimeout;      // in milliseconds
   private final HttpHost proxy;
   private final Executor executor;
+  private final boolean useCompression;
 
-  private HttpTransport(String apiKey, int connectTimeout, int socketTimeout, HttpHost proxy, Executor executor) {
+  private HttpTransport(String apiKey,
+                        int connectTimeout,
+                        int socketTimeout,
+                        HttpHost proxy,
+                        Executor executor,
+                        boolean useCompression) {
     this.seriesUrl = String.format("%s/series?api_key=%s", BASE_URL, apiKey);
     this.connectTimeout = connectTimeout;
     this.socketTimeout = socketTimeout;
     this.proxy = proxy;
+    this.useCompression = useCompression;
     if (executor != null) {
       this.executor = executor;
     } else {
@@ -52,6 +63,7 @@ public class HttpTransport implements Transport {
     int socketTimeout = 5000;
     HttpHost proxy;
     Executor executor;
+    boolean useCompression = false;
 
     public Builder withApiKey(String key) {
       this.apiKey = key;
@@ -78,8 +90,13 @@ public class HttpTransport implements Transport {
       return this;
     }
 
+    public Builder withCompression(boolean compression) {
+      this.useCompression = compression;
+      return this;
+    }
+
     public HttpTransport build() {
-      return new HttpTransport(apiKey, connectTimeout, socketTimeout, proxy, executor);
+      return new HttpTransport(apiKey, connectTimeout, socketTimeout, proxy, executor, useCompression);
     }
   }
 
@@ -116,20 +133,28 @@ public class HttpTransport implements Transport {
         StringBuilder sb = new StringBuilder();
         sb.append("Sending HTTP POST request to ");
         sb.append(this.transport.seriesUrl);
-        sb.append(", POST body length is: ");
+        sb.append(", uncompressed POST body length is: ");
         sb.append(postBody.length());
         LOG.debug(sb.toString());
 
         StringBuilder bodyMsgBuilder = new StringBuilder();
-        bodyMsgBuilder.append("POST body is: \n").append(postBody);
+        bodyMsgBuilder.append("Uncompressed POST body is: \n").append(postBody);
         LOG.debug(bodyMsgBuilder.toString());
       }
       long start = System.currentTimeMillis();
       org.apache.http.client.fluent.Request request = Post(this.transport.seriesUrl)
         .useExpectContinue()
         .connectTimeout(this.transport.connectTimeout)
-        .socketTimeout(this.transport.socketTimeout)
-        .bodyString(postBody, ContentType.APPLICATION_JSON);
+        .socketTimeout(this.transport.socketTimeout);
+
+      if (this.transport.useCompression) {
+        request
+          .addHeader("Content-Encoding", "deflate")
+          .addHeader("Content-MD5", DigestUtils.md5Hex(postBody))
+          .bodyStream(deflated(postBody), ContentType.APPLICATION_JSON);
+      } else {
+        request.bodyString(postBody, ContentType.APPLICATION_JSON);
+      }
 
       if (this.transport.proxy != null) {
         request.viaProxy(this.transport.proxy);
@@ -157,6 +182,7 @@ public class HttpTransport implements Transport {
             StringBuilder sb = new StringBuilder();
 
             sb.append(headline);
+            sb.append("\n");
             sb.append("  Timing: ").append(elapsed).append(" ms\n");
             sb.append("  Status: ").append(response.getStatusLine().getStatusCode()).append("\n");
 
@@ -169,6 +195,31 @@ public class HttpTransport implements Transport {
       } else {
         response.discardContent();
       }
+    }
+
+    private static InputStream deflated(String str) throws IOException {
+      if (str == null || str.length() == 0) {
+        return new ByteArrayInputStream(new byte[0]);
+      }
+      ByteArrayInputStream inputStream = new ByteArrayInputStream(str.getBytes("UTF-8"));
+      return new DeflaterInputStream(inputStream) {
+        @Override
+        public void close() throws IOException {
+          if (LOG.isDebugEnabled()) {
+            final StringBuilder sb = new StringBuilder();
+            long bytesWritten = this.def.getBytesWritten();
+            long bytesRead = this.def.getBytesRead();
+            sb.append("POST body length compressed / uncompressed / compression ratio: ");
+            sb.append(bytesWritten);
+            sb.append(" / ");
+            sb.append(bytesRead);
+            sb.append(" / ");
+            sb.append(String.format( "%.2f", bytesRead / (double)bytesWritten));
+            LOG.debug(sb.toString());
+          }
+          super.close();
+        }
+      };
     }
   }
 }
