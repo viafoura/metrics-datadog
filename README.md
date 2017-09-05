@@ -32,6 +32,7 @@ import org.coursera.metrics.datadog.DatadogReporter.Expansion._
 import org.coursera.metrics.datadog.transport.Transport
 import org.coursera.metrics.datadog.transport.HttpTransport
 import org.coursera.metrics.datadog.transport.UdpTransport
+import scala.concurrent.duration.SECONDS
 
 ...
 val expansions = EnumSet.of(COUNT, RATE_1_MINUTE, RATE_15_MINUTE, MEDIAN, P95, P99)
@@ -42,7 +43,7 @@ val reporter = DatadogReporter.forRegistry(registry)
   .withExpansions(expansions)
   .build()
 
-reporter.start(10, TimeUnit.SECONDS)
+reporter.start(10, SECONDS)
 ~~~
 
 Example of using UDP transport:
