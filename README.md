@@ -227,7 +227,8 @@ Datadog tags but does not modify the metric name.
 metrics:
   reporters:
     - type: datadog
-      metricNameFormatter: custom
+      metricNameFormatter:
+        type: custom
 ~~~
 
 Adding a custom formatter requires a few things:
