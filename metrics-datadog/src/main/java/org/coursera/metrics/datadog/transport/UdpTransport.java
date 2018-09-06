@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -30,7 +30,7 @@ public class UdpTransport implements Transport {
   private final Map lastSeenCounters = new HashMap<String, Long>();
 
   private UdpTransport(String prefix, String statsdHost, int port, boolean isRetryingLookup, String[] globalTags) {
-    final Callable<InetSocketAddress> socketAddressCallable;
+    final Callable<SocketAddress> socketAddressCallable;
 
     if(isRetryingLookup) {
       socketAddressCallable = volatileAddressResolver(statsdHost, port);
@@ -154,7 +154,7 @@ public class UdpTransport implements Transport {
   }
 
   // Visible for testing.
-  static Callable<InetSocketAddress> staticAddressResolver(final String host, final int port) {
+  static Callable<SocketAddress> staticAddressResolver(final String host, final int port) {
     try {
       return NonBlockingStatsDClient.staticAddressResolution(host, port);
     } catch(final Exception e) {
@@ -164,7 +164,7 @@ public class UdpTransport implements Transport {
   }
 
   // Visible for testing.
-  static Callable<InetSocketAddress> volatileAddressResolver(final String host, final int port) {
+  static Callable<SocketAddress> volatileAddressResolver(final String host, final int port) {
     return NonBlockingStatsDClient.volatileAddressResolution(host, port);
   }
 }

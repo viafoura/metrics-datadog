@@ -1,6 +1,6 @@
 package org.coursera.metrics.datadog.transport;
 
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,7 +31,7 @@ public class UdpTransportTest {
     assertNotNull(transport);
   }
 
-  @Test
+  @Test(expected = RuntimeException.class)
   public void constructsWhenUnreachableHostWithRetry() {
     assertNotNull(new UdpTransport.Builder().withStatsdHost(TEST_HOST).withRetryingLookup(true).build());
   }
@@ -43,7 +43,7 @@ public class UdpTransportTest {
 
   @Test
   public void volatileResolverResolvesByTheTimeTheHostIsResolvable() throws Exception {
-    final Callable<InetSocketAddress> retryingCallable = UdpTransport.volatileAddressResolver(TEST_HOST, TEST_PORT);
+    final Callable<SocketAddress> retryingCallable = UdpTransport.volatileAddressResolver(TEST_HOST, TEST_PORT);
     // ^ Doesn't crash when host is unresolvable.
 
     try {
