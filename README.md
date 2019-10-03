@@ -27,11 +27,11 @@ to memory constraints.
 ## Usage
 
 ~~~scala
-import org.coursera.metrics.datadog.DatadogReporter
-import org.coursera.metrics.datadog.DatadogReporter.Expansion._
-import org.coursera.metrics.datadog.transport.Transport
-import org.coursera.metrics.datadog.transport.HttpTransport
-import org.coursera.metrics.datadog.transport.UdpTransport
+import DatadogReporter
+import DatadogReporter.Expansion._
+import Transport
+import HttpTransport
+import UdpTransport
 import scala.concurrent.duration.SECONDS
 
 ...
@@ -104,9 +104,9 @@ First, add the `dropwizard-metrics-datadog` dependency in your POM:
 
 ~~~xml    
     <dependency>
-        <groupId>org.coursera</groupId>
+        <groupId>com.viafoura</groupId>
         <artifactId>dropwizard-metrics-datadog</artifactId>
-        <version>1.1.13</version>
+        <version>2.0.0-RC2</version>
     </dependency>
 ~~~
 
@@ -191,7 +191,7 @@ part of the metric name (not just the beginning).
 If you want to limit the set of expansions applied to each metric, you can specify
 a custom set.
 
-The full set of expansions can be found in the [Expansion enum](https://github.com/coursera/metrics-datadog/blob/master/metrics-datadog/src/main/java/org/coursera/metrics/datadog/DatadogReporter.java#L232).
+The full set of expansions can be found in the [Expansion enum](https://github.com/viafoura/metrics-datadog/blob/master/metrics-datadog/src/main/java/com/viafoura/metrics/datadog/DatadogReporter.java#L232).
 
 ~~~yaml
 metrics:
@@ -260,12 +260,12 @@ public class CustomMetricNameFormatterFactory implements MetricNameFormatterFact
 }
 ~~~
 
-##### 3. Add the Factory to `org.coursera.metrics.datadog.MetricNameFormatterFactory` file
+##### 3. Add the Factory to `MetricNameFormatterFactory` file
 
 We need to make sure our `CustomMetricNameFormatterFactory` is added to the list of subTypes
 for `MetricNameFormatterFactory`, otherwise the `"custom"` in our config won't be recognized.
 
-Add a file called `org.coursera.metrics.datadog.MetricNameFormatterFactory` to
+Add a file called `MetricNameFormatterFactory` to
 `src/main/resources/META-INF/services` and add the full path to your class to the file
 (e.g. `com.company.CustomMetricNameFormatterFactory`)
 
@@ -277,27 +277,26 @@ Similar to the `MetricNameFormatter` steps, we need to:
 
 1. Create a DynamicTagsCallback
 2. Create a DynamicTagsCallbackFactory with `@JsonTypeName` annotation
-3. Add the Factory to `org.coursera.metrics.datadog.DynamicTagsCallbackFactory` file
+3. Add the Factory to `DynamicTagsCallbackFactory` file
 
 See above instructions for details.
 
 ## Maven Info
 
 Metrics datadog reporter is available as an artifact on
-[Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.coursera%22%20AND%20a%3A%22metrics-datadog%22)
+[Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.viafoura%22%20AND%20a%3A%22metrics-datadog%22)
 
-* Group: org.coursera
+* Group: com.viafoura
 * Artifact: metrics-datadog
-* Version: 1.1.13
+* Version: 2.0.0-RC2
 
 Dropwizard datadog reporter is available as an artifact on
-[Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.coursera%22%20AND%20a%3A%22dropwizard-metrics-datadog%22)
+[Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.viafoura%22%20AND%20a%3A%22dropwizard-metrics-datadog%22)
 
-* Group: org.coursera
+* Group: com.viafoura
 * Artifact: dropwizard-metrics-datadog
-* Version: 1.1.13
+* Version: 2.0.0-RC2
 
 ## Contributing
 
-We follow Google's [Java Code
-Style](https://google.github.io/styleguide/javaguide.html)
+We follow Google's [Java Code Style](https://google.github.io/styleguide/javaguide.html)

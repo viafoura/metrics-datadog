@@ -1,0 +1,2 @@
+com.viafoura.metrics.datadog.transport.HttpTransportFactory
+com.viafoura.metrics.datadog.transport.UdpTransportFactory
