@@ -29,7 +29,7 @@ public class UdpTransport implements Transport {
   private final StatsDClient statsd;
   private final Map lastSeenCounters = new HashMap<String, Long>();
 
-  private UdpTransport(String prefix, String statsdHost, int port, boolean isRetryingLookup, String[] globalTags) {
+  private UdpTransport(String prefix, String statsdHost, int port, boolean isRetryingLookup, String[] globalTags, int socketTimeoutMs, int socketBufferBytes, int maxPacketSizeBytes) {
     final Callable<SocketAddress> socketAddressCallable;
 
     if(isRetryingLookup) {
@@ -47,7 +47,10 @@ public class UdpTransport implements Transport {
                 LOG.error(e.getMessage(), e);
               }
             },
-            socketAddressCallable
+            socketAddressCallable,
+	    socketTimeoutMs,
+	    socketBufferBytes,
+	    maxPacketSizeBytes
     );
   }
 
@@ -60,6 +63,9 @@ public class UdpTransport implements Transport {
     String statsdHost = "localhost";
     int port = 8125;
     boolean isLookupRetrying = false;
+    int socketTimeoutMs = 100;
+    int socketBufferBytes = -1;
+    int maxPacketSizeBytes = 1400;
 
     public Builder withPrefix(String prefix) {
       this.prefix = prefix;
@@ -81,8 +87,23 @@ public class UdpTransport implements Transport {
       return this;
     }
 
+    public Builder withSocketTimeoutMs(int socketTimeoutMs) {
+      this.socketTimeoutMs = socketTimeoutMs;
+      return this;
+    }
+
+    public Builder withSocketBufferBytes(int socketBufferBytes) {
+      this.socketBufferBytes = socketBufferBytes;
+      return this;
+    }
+
+    public Builder withMaxPacketSizeBytes (int maxPacketSizeBytes) {
+      this.maxPacketSizeBytes = maxPacketSizeBytes;
+      return this;
+    }
+
     public UdpTransport build() {
-      return new UdpTransport(prefix, statsdHost, port, isLookupRetrying, new String[0]);
+      return new UdpTransport(prefix, statsdHost, port, isLookupRetrying, new String[0], socketTimeoutMs, socketBufferBytes, maxPacketSizeBytes);
     }
   }
 
