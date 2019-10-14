@@ -13,5 +13,5 @@ public interface DynamicTagsCallback {
    * @return dynamic tags that will merge into the static tags. Dynamic tags will overwrite
    * static tags with the same key
    */
-  public List<String> getTags();
+  public List<String> getTags(String metric);
 }
