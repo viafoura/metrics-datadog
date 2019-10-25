@@ -37,11 +37,24 @@ public class DatadogReporterTest {
   private final Transport.Request request =
       mock(Transport.Request.class);
   private final DynamicTagsCallback callback = mock(DynamicTagsCallback.class);
+  private final DynamicTagsCallback customCallback = new MetricsTagger();
   private MetricRegistry metricsRegistry;
   private DatadogReporter reporter;
   private DatadogReporter reporterWithPrefix;
   private DatadogReporter reporterWithCallback;
+  private DatadogReporter reporterWithCustomCallback;
   private List<String> tags;
+
+  class MetricsTagger implements DynamicTagsCallback {
+    @Override
+    public List<String> getTags(String metric) {
+      return new ArrayList<String>() {
+        {
+          add(String.format("metric:%s", metric));
+        }
+      };
+    }
+  }
 
   @Before
   public void setUp() throws IOException {
@@ -82,6 +95,15 @@ public class DatadogReporterTest {
         .withDynamicTagCallback(callback)
         .build();
 
+    reporterWithCustomCallback = DatadogReporter
+        .forRegistry(metricsRegistry)
+        .withHost(HOST)
+        .withClock(clock)
+        .convertRatesTo(TimeUnit.SECONDS)
+        .convertDurationsTo(TimeUnit.MILLISECONDS)
+        .withTransport(transport)
+        .withDynamicTagCallback(customCallback)
+        .build();
   }
 
   @Test
@@ -365,7 +387,7 @@ public class DatadogReporterTest {
     dynamicTags.add("status:active");
     dynamicTags.add("speed:29");
 
-    when(callback.getTags()).thenReturn(dynamicTags);
+    when(callback.getTags("counter")).thenReturn(dynamicTags);
 
     final Counter counter = mock(Counter.class);
     when(counter.getCount()).thenReturn(100L);
@@ -377,6 +399,26 @@ public class DatadogReporterTest {
             this.<Timer>map());
 
     verify(request).addGauge(new DatadogGauge("counter", 100L, timestamp, HOST, dynamicTags));
+  }
+
+  @Test
+  public void reportsWithDynamicMetricCallback() throws Exception {
+    List<String> expectedTags = new ArrayList<String>() {
+      {
+        add("metric:counter");
+      }
+    };
+
+    final Counter counter = mock(Counter.class);
+    when(counter.getCount()).thenReturn(100L);
+
+    reporterWithCustomCallback.report(this.<Gauge>map(),
+            this.<Counter>map("counter", counter),
+            this.<Histogram>map(),
+            this.<Meter>map(),
+            this.<Timer>map());
+
+    verify(request).addGauge(new DatadogGauge("counter", 100L, timestamp, HOST, expectedTags));
   }
 
   @Test

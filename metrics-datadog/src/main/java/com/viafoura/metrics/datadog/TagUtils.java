@@ -50,4 +50,17 @@ class TagUtils {
 
     return newTags;
   }
+
+  public static List<String> createTagsWithMetricsName(String metricsName, DynamicTagsCallback tagsCallback, List<String> tags) {
+    List<String> newTags = tags;
+
+    if (tagsCallback != null) {
+      List<String> dynamicTags = tagsCallback.getTags(metricsName);
+      if (dynamicTags != null && ! dynamicTags.isEmpty()) {
+        newTags = TagUtils.mergeTags(tags, dynamicTags);
+      }
+    }
+
+    return newTags;
+  }
 }

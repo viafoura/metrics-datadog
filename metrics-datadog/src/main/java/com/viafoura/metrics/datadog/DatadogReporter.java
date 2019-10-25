@@ -15,6 +15,7 @@ import com.viafoura.metrics.datadog.model.DatadogGauge;
 import com.viafoura.metrics.datadog.transport.HttpTransport;
 import com.viafoura.metrics.datadog.transport.Transport;
 import com.viafoura.metrics.datadog.transport.UdpTransport;
+import com.viafoura.metrics.datadog.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,35 +78,32 @@ public class DatadogReporter extends ScheduledReporter {
                      SortedMap<String, Timer> timers) {
     final long timestamp = clock.getTime() / 1000;
 
-    List<String> newTags = tags;
-    if (tagsCallback != null) {
-      List<String> dynamicTags = tagsCallback.getTags();
-      if (dynamicTags != null && ! dynamicTags.isEmpty()) {
-        newTags = TagUtils.mergeTags(tags, dynamicTags);
-      }
-    }
-
     try {
       request = transport.prepare();
 
       for (Map.Entry<String, Gauge> entry : gauges.entrySet()) {
-        reportGauge(prefix(entry.getKey()), entry.getValue(), timestamp, newTags);
+        String name = prefix(entry.getKey());
+        reportGauge(name, entry.getValue(), timestamp, TagUtils.createTagsWithMetricsName(name, tagsCallback, tags));
       }
 
       for (Map.Entry<String, Counter> entry : counters.entrySet()) {
-        reportCounter(prefix(entry.getKey()), entry.getValue(), timestamp, newTags);
+        String name = prefix(entry.getKey());
+        reportCounter(name, entry.getValue(), timestamp, TagUtils.createTagsWithMetricsName(name, tagsCallback, tags));
       }
 
       for (Map.Entry<String, Histogram> entry : histograms.entrySet()) {
-        reportHistogram(prefix(entry.getKey()), entry.getValue(), timestamp, newTags);
+        String name = prefix(entry.getKey());
+        reportHistogram(name, entry.getValue(), timestamp, TagUtils.createTagsWithMetricsName(name, tagsCallback, tags));
       }
 
       for (Map.Entry<String, Meter> entry : meters.entrySet()) {
-        reportMetered(prefix(entry.getKey()), entry.getValue(), timestamp, newTags);
+        String name = prefix(entry.getKey());
+        reportMetered(name, entry.getValue(), timestamp, TagUtils.createTagsWithMetricsName(name, tagsCallback, tags));
       }
 
       for (Map.Entry<String, Timer> entry : timers.entrySet()) {
-        reportTimer(prefix(entry.getKey()), entry.getValue(), timestamp, newTags);
+        String name = prefix(entry.getKey());
+        reportTimer(name, entry.getValue(), timestamp, TagUtils.createTagsWithMetricsName(name, tagsCallback, tags));
       }
 
       request.send();
