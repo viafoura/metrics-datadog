@@ -48,7 +48,6 @@ public class DatadogReporterTest {
   class MetricsTagger implements DynamicTagsCallback {
     @Override
     public List<String> getTags(String metric) {
-      System.out.println("GOT METRIC: " + metric);
       return new ArrayList<String>() {
         {
           add(String.format("metric:%s", metric));
