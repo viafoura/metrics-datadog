@@ -31,8 +31,8 @@ public class HttpTransport implements Transport {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpTransport.class);
 
-  private final static String BASE_URL_US = "https://app.datadoghq.com/api/v1";
-  private final static String BASE_URL_EU = "https://app.datadoghq.eu/api/v1";
+  private final static String BASE_URL_US = "https://api.datadoghq.com/api/v1";
+  private final static String BASE_URL_EU = "https://api.datadoghq.eu/api/v1";
   private final String seriesUrl;
   private final int connectTimeout;     // in milliseconds
   private final int socketTimeout;      // in milliseconds
